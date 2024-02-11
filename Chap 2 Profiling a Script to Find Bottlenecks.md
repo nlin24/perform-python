@@ -1,6 +1,3 @@
-# Oreilly High Performance Python, 2nd Edition My Notes
-
-
 ## Chap 2 Profiling a Script to Find Bottlenecks
 
 
@@ -309,3 +306,117 @@ $ sudo env "PATH=$PATH" py-spy top --pid 15953
                 8 CALL_FUNCTION            1
               10 RETURN_VALUE
   ```
+
+
+### Use a No-op @profile Decorator for unit testing
+* Python _pytest_ would fail for **NameError** if a function is decorated with (@profile)
+* _pytest_ would not be able to inject the (@profile) decorator into the local namespace
+  sample _utility.py_:
+  ```
+  import time
+
+  def test_some_fn():
+      """Check basic behaviors for our function"""
+      assert some_fn(2) == 4
+      assert some_fn(1) == 1
+      assert some_fn(-1) == 1
+
+
+  @profile
+  def some_fn(useful_input):
+      """An expensive function that we wish to both test and profile"""
+      # artificial "we're doing something clever and expensive" delay
+      time.sleep(1)
+      return useful_input ** 2
+
+
+  if __name__ == "__main__":
+      print(f"Example call `some_fn(2)` == {some_fn(2)}")
+  ```
+  _pytest_ error:
+  ```
+  $ pytest utility.py
+  =============== test session starts ===============
+  platform linux -- Python 3.7.3, pytest-4.6.2, py-1.8.0, pluggy-0.12.0
+  rootdir: noop_profile_decorator
+  plugins: cov-2.7.1
+  collected 0 items / 1 errors
+
+  ====================== ERRORS =====================
+  ___________ ERROR collecting utility.py ___________
+  utility.py:20: in <module>
+      @profile
+  E   NameError: name 'profile' is not defined
+  ```
+* Add a no-op decorator function for _profile_ and test would run as is
+  updated _utility.py_:
+  ```
+  import time
+
+  def test_some_fn():
+      """Check basic behaviors for our function"""
+      assert some_fn(2) == 4
+      assert some_fn(1) == 1
+      assert some_fn(-1) == 1
+
+
+  @profile
+  def some_fn(useful_input):
+      """An expensive function that we wish to both test and profile"""
+      # artificial "we're doing something clever and expensive" delay
+      time.sleep(1)
+      return useful_input ** 2
+
+
+  # check for line_profiler or memory_profiler in the local scope, both
+  # are injected by their respective tools or they're absent
+  # if these tools aren't being used (in which case we need to substitute
+  # a dummy @profile decorator)
+  if 'line_profiler' not in dir() and 'profile' not in dir():
+      def profile(func):
+          return func
+
+
+  if __name__ == "__main__":
+      print(f"Example call `some_fn(2)` == {some_fn(2)}")
+  ``` 
+  updated _pytest_ result:
+  ```
+  $ pytest utility.py
+  =============== test session starts ===============
+  platform linux -- Python 3.7.3, pytest-4.6.2, py-1.8.0, pluggy-0.12.0
+  rootdir: /home/ian/workspace/personal_projects/high_performance_python_book_2e/
+          high-performance-python-2e/examples_ian/ian/ch02/noop_profile_decorator
+  plugins: cov-2.7.1
+  collected 1 item
+
+  utility.py .
+
+  ============= 1 passed in 3.04 seconds ============
+
+  $ kernprof -l -v utility.py
+  Example call `some_fn(2)` == 4
+  ...
+  Line #      Hits         Time  Per Hit   % Time  Line Contents
+  ==============================================================
+      20                                           @profile
+      21                                           def some_fn(useful_input):
+      22                                               """An expensive function that...
+      23                                               # artificial 'we're doing...
+      24         1    1001345.0 1001345.0    100.0      time.sleep(1)
+      25         1          7.0      7.0      0.0      return useful_input ** 2
+
+  $ python -m memory_profiler utility.py
+  Example call `some_fn(2)` == 4
+  Filename: utility.py
+
+  Line #    Mem usage    Increment   Line Contents
+  ================================================
+      20   48.277 MiB   48.277 MiB   @profile
+      21                             def some_fn(useful_input):
+      22                                 """An expensive function that we wish to...
+      23                                 # artificial 'we're doing something clever...
+      24   48.277 MiB    0.000 MiB       time.sleep(1)
+      25   48.277 MiB    0.000 MiB       return useful_input ** 2
+  ```
+
