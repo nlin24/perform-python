@@ -1,1 +1,1 @@
-# perform-python
+# Oreilly High Performance Python, 2nd Edition My Notes
