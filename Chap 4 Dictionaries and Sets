@@ -1,1 +1,58 @@
 ## Chap 4 Dictionaries and Sets
+
+
+### Dictionaries
+* Key/value pair provides constant time quering data
+* Actual time quering data depends on the hash algorithm implemented underneath the dictionary
+
+
+### Sets
+* Sets have keys but not a value pair
+* Sets guarantee uniqueness of the keys
+
+
+###  Dictionaries and Namespaces
+* Python variables, functions, or modules can be looked up via _locals()_ and _globals()_
+* _locals()_ contains all the local variables
+* _globals()_ is looked up if object does not reside locally
+* Lastly, the __builtin__ object is search if object is not in the global variable
+  example:
+  ```
+  import math
+  from math import sin
+
+  def test1(x):
+      """
+      >>> %timeit test1(123_456)
+      162 µs ± 3.82 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+      test1 performs two lookups, first one to find the _math_ module,
+      and then second lookup finds _sin_ function within the _math_ module.
+      """
+      res = 1
+      for _ in range(1000):
+          res += math.sin(x)
+      return res
+
+  def test2(x):
+      """
+      >>> %timeit test2(123_456)
+      124 µs ± 6.77 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+      test2 looks up sin in the local namespace and no avail. 
+      It then looks it up in global namespace and finds it within the math module.
+      """
+      res = 1
+      for _ in range(1000):
+          res += sin(x)
+      return res
+
+  def test3(x, sin=math.sin):
+      """
+      >>> %timeit test3(123_456)
+      105 µs ± 3.35 µs per loop (mean ± std. dev. of 7 runs, 10000 loops each)
+      test3 loads _math.sin_ to local namespace as _sin_ and then calls _sin_ locally.
+      """
+      res = 1
+      for _ in range(1000):
+          res += sin(x)
+      return res
+  ```
