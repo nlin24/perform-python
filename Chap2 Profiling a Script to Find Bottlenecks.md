@@ -98,7 +98,10 @@
     ```
     * **-l** measures line by line
     * **-v** turns on verbose output to the console, else output is saved to **.lprof** that can analyzed by the *line_profile* module
-
+    * **Hits**:
+    * **Per Hit**: 
+    * **% Time**:
+ 
 
 ### Measure Memory Usage
 * Memory profiling is not as straightforward as CPU usage profile
