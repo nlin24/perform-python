@@ -12,6 +12,10 @@
 * JIT let the compiler decide to compile just the part of the code at runtime, and not much work up front. JIT is not suitable for short but frequently running scripts
 
 
+### Cython
+* Skipped. Not going to use unless I need to
+
+
 ### [Pypy](https://www.pypy.org/)
 * PyPy may not help with:
   * Short-running processes that take less than few seconds; the JIT compiler won't have enough time to warm up
